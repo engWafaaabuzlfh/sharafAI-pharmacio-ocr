@@ -1,0 +1,10 @@
+.git
+.gitignore
+**/__pycache__
+**/*.pyc
+*.ipynb
+.pytest_cache
+.venv
+venv
+.env
+*.md

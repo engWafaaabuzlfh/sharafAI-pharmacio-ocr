@@ -1,0 +1,18 @@
+services:
+  ai-engine:
+    build: .
+    image: pharmacio-ocr:latest
+    container_name: pharmacio_ai_engine
+    ports:
+      - "8080:8080"
+    env_file:
+      - ../pharmacio-backend/.env
+    environment:
+      BACKEND_BASE_URL: http://backend:8000
+      STORAGE_BACKEND: s3
+    networks:
+      - pharmacio-net
+
+networks:
+  pharmacio-net:
+    external: true
