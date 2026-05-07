@@ -24,6 +24,7 @@ RUN mkdir -p /root/.EasyOCR/model \
     && python -c "import easyocr; easyocr.Reader(['ar', 'en'], gpu=False)"
 
 COPY integrated_pipeline.py .
+COPY ocr_pipeline ./ocr_pipeline
 COPY ocr_engine ./ocr_engine
 
 ENV PYTHONPATH=/app

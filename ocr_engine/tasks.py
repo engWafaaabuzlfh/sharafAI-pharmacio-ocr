@@ -17,7 +17,47 @@ from ocr_engine.storage import FileFetchError, fetch_file_to_path
 logger = logging.getLogger(__name__)
 
 
-def run_ocr_job(job_id: str, file_reference: str, settings: Settings | None = None) -> None:
+def _normalize_engine_name(ocr_engine: str | None) -> str:
+    value = (ocr_engine or "easyocr").strip().lower().replace("-", "_")
+    aliases = {
+        "easy": "easyocr",
+        "easy_ocr": "easyocr",
+        "hf": "huggingface",
+        "hugging_face": "huggingface",
+        "qwen": "huggingface",
+        "qwen2_vl": "huggingface",
+        "google": "gemini",
+    }
+    return aliases.get(value, value)
+
+
+def _run_selected_engine(local_pdf: str, work_dir: str, ocr_engine: str) -> dict[str, Any] | None:
+    engine = _normalize_engine_name(ocr_engine)
+    if engine == "easyocr":
+        from integrated_pipeline import process_pdf_to_json
+
+        _, merged_data = process_pdf_to_json(local_pdf, output_base_dir=work_dir)
+        return merged_data
+
+    if engine == "gemini":
+        from ocr_gemini.extractor import extract_pdf_to_json
+
+        return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "gemini_result.json"))
+
+    if engine == "huggingface":
+        from ocr_huggingFace.extractor import extract_pdf_to_json
+
+        return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "huggingface_result.json"))
+
+    raise ValueError(f"Unsupported OCR engine: {ocr_engine}")
+
+
+def run_ocr_job(
+    job_id: str,
+    file_reference: str,
+    settings: Settings | None = None,
+    ocr_engine: str = "easyocr",
+) -> None:
     """
     Download PDF by storage key, run integrated_pipeline.process_pdf_to_json unchanged,
     POST {job_id, payload} to backend /api/v1/ocr/result/.
@@ -41,12 +81,10 @@ def run_ocr_job(job_id: str, file_reference: str, settings: Settings | None = No
 
     merged_data: dict[str, Any] | None = None
     try:
-        # Lazy import so the API process can start before EasyOCR loads (integrated_pipeline init).
-        from integrated_pipeline import process_pdf_to_json
-
-        _, merged_data = process_pdf_to_json(local_pdf, output_base_dir=work_dir)
+        # Lazy import inside dispatcher so optional engines load only when selected.
+        merged_data = _run_selected_engine(local_pdf, work_dir, ocr_engine)
     except Exception:
-        logger.exception("Job %s: process_pdf_to_json failed", job_id)
+        logger.exception("Job %s: OCR engine %s failed", job_id, ocr_engine)
         return
 
     if not merged_data:
@@ -54,7 +92,11 @@ def run_ocr_job(job_id: str, file_reference: str, settings: Settings | None = No
         return
 
     headers = {"Authorization": settings.internal_service_token}
-    body = {"job_id": job_id, "payload": merged_data}
+    body = {
+        "job_id": job_id,
+        "ocr_engine": _normalize_engine_name(ocr_engine),
+        "payload": merged_data,
+    }
     try:
         r = requests.post(
             callback_url,

@@ -26,6 +26,10 @@ app = FastAPI(title="Pharmacio OCR Engine", version="1.0.0")
 class ProcessRequest(BaseModel):
     job_id: str = Field(..., description="OCR job UUID string from backend")
     file_reference: str = Field(..., description="Storage key (S3 key or local media path)")
+    ocr_engine: str = Field(
+        default="easyocr",
+        description="OCR engine to use: easyocr, gemini, huggingface",
+    )
 
 
 def _check_dispatch_auth(authorization: str | None) -> None:
@@ -50,9 +54,20 @@ def _enqueue_process(
 ) -> dict[str, str]:
     _check_dispatch_auth(authorization)
     settings = get_settings()
-    background_tasks.add_task(run_ocr_job, body.job_id, body.file_reference, settings)
-    logger.info("Accepted job_id=%s file_reference=%s", body.job_id, body.file_reference)
-    return {"status": "accepted"}
+    background_tasks.add_task(
+        run_ocr_job,
+        body.job_id,
+        body.file_reference,
+        settings,
+        body.ocr_engine,
+    )
+    logger.info(
+        "Accepted job_id=%s file_reference=%s ocr_engine=%s",
+        body.job_id,
+        body.file_reference,
+        body.ocr_engine,
+    )
+    return {"status": "accepted", "ocr_engine": body.ocr_engine}
 
 
 @app.post("/v1/process", status_code=202)

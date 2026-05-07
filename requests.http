@@ -1,0 +1,40 @@
+﻿@baseUrl = http://localhost:8080
+@apiKey = test-key
+@jobId = test-job-001
+@fileReference = invoices/test.pdf
+
+### Health check
+GET {{baseUrl}}/health
+
+### Start OCR job with EasyOCR (default)
+POST {{baseUrl}}/v1/process
+Authorization: {{apiKey}}
+Content-Type: application/json
+
+{
+  "job_id": "{{jobId}}-easyocr",
+  "file_reference": "{{fileReference}}",
+  "ocr_engine": "easyocr"
+}
+
+### Start OCR job with Gemini
+POST {{baseUrl}}/v1/process
+Authorization: {{apiKey}}
+Content-Type: application/json
+
+{
+  "job_id": "{{jobId}}-gemini",
+  "file_reference": "{{fileReference}}",
+  "ocr_engine": "gemini"
+}
+
+### Start OCR job with Hugging Face / Qwen2-VL
+POST {{baseUrl}}/v1/process
+Authorization: {{apiKey}}
+Content-Type: application/json
+
+{
+  "job_id": "{{jobId}}-hf",
+  "file_reference": "{{fileReference}}",
+  "ocr_engine": "huggingface"
+}
