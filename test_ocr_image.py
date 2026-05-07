@@ -9,19 +9,18 @@ Examples:
 from __future__ import annotations
 
 import argparse
-import json
 from pathlib import Path
 from typing import Any
 
+from utils.files import require_file
+from utils.json_io import dumps_json, write_json
+
 
 def _write_or_print(data: dict[str, Any], output_path: str | None) -> None:
-    text = json.dumps(data, ensure_ascii=False, indent=2)
     if output_path:
-        output = Path(output_path)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(text, encoding="utf-8")
+        output = write_json(data, output_path)
         print(f"Saved JSON: {output}")
-    print(text)
+    print(dumps_json(data))
 
 
 def run_easyocr(path: Path) -> dict[str, Any]:
@@ -83,9 +82,10 @@ def main() -> int:
     )
     args = parser.parse_args()
 
-    input_path = Path(args.input)
-    if not input_path.is_file():
-        print(f"Input file not found: {input_path}")
+    try:
+        input_path = require_file(args.input, label="Input file")
+    except FileNotFoundError as e:
+        print(e)
         return 1
 
     if args.engine == "easyocr":

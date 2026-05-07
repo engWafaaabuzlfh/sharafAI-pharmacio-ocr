@@ -3,12 +3,14 @@
 from __future__ import annotations
 
 import argparse
-import json
 import os
 from pathlib import Path
 from typing import Any
 
 from PIL import Image
+
+from utils.files import require_file
+from utils.json_io import dumps_json, extract_json_object, write_json
 
 
 DEFAULT_MODEL = "Qwen/Qwen2-VL-7B-Instruct"
@@ -58,23 +60,6 @@ def _render_pdf_pages(pdf_path: Path, *, dpi: int = 180) -> list[Image.Image]:
             image = Image.frombytes("RGB", [pix.width, pix.height], pix.samples)
             pages.append(image)
     return pages
-
-
-def _extract_json_object(text: str) -> dict[str, Any]:
-    cleaned = text.strip()
-    if cleaned.startswith("```"):
-        cleaned = cleaned.strip("`").strip()
-        if cleaned.lower().startswith("json"):
-            cleaned = cleaned[4:].strip()
-
-    try:
-        return json.loads(cleaned)
-    except json.JSONDecodeError:
-        start = cleaned.find("{")
-        end = cleaned.rfind("}")
-        if start != -1 and end != -1 and end > start:
-            return json.loads(cleaned[start : end + 1])
-        return {"raw_response": text, "warnings": ["Model did not return valid JSON"]}
 
 
 def _load_model(model_name: str):
@@ -137,7 +122,7 @@ def _extract_page_json(
         skip_special_tokens=True,
         clean_up_tokenization_spaces=False,
     )[0]
-    page_data = _extract_json_object(output_text)
+    page_data = extract_json_object(output_text)
     page_data.setdefault("page", page_number)
     return page_data
 
@@ -182,9 +167,7 @@ def extract_pdf_to_json(
     dpi: int = 180,
     max_new_tokens: int = 2048,
 ) -> dict[str, Any]:
-    pdf = Path(pdf_path)
-    if not pdf.is_file():
-        raise FileNotFoundError(f"PDF not found: {pdf}")
+    pdf = require_file(pdf_path, label="PDF")
 
     images = _render_pdf_pages(pdf, dpi=dpi)
     data = extract_images_to_json(
@@ -195,9 +178,7 @@ def extract_pdf_to_json(
     )
 
     if output_path:
-        output = Path(output_path)
-        output.parent.mkdir(parents=True, exist_ok=True)
-        output.write_text(json.dumps(data, ensure_ascii=False, indent=2), encoding="utf-8")
+        write_json(data, output_path)
     return data
 
 
@@ -217,7 +198,7 @@ def main() -> int:
         dpi=args.dpi,
         max_new_tokens=args.max_new_tokens,
     )
-    print(json.dumps(data, ensure_ascii=False, indent=2))
+    print(dumps_json(data))
     return 0
 
 

@@ -18,26 +18,11 @@ from ocr_pipeline.merge import read_and_merge_json_files_simple
 from ocr_pipeline.ocr_extraction import process_cells_with_positions
 from ocr_pipeline.preprocessing import process_image_normalize_only
 from ocr_pipeline.settings import EXPERIMENTAL_CONFIGS
-
-
-def _read_dotenv_value(key: str) -> str | None:
-    env_path = os.path.join(os.getcwd(), ".env")
-    if not os.path.isfile(env_path):
-        return None
-
-    with open(env_path, encoding="utf-8") as f:
-        for line in f:
-            line = line.strip()
-            if not line or line.startswith("#") or "=" not in line:
-                continue
-            name, value = line.split("=", 1)
-            if name.strip() == key:
-                return value.strip().strip('"').strip("'") or None
-    return None
+from utils.env import get_env_value
 
 
 def _get_poppler_path() -> str | None:
-    return os.getenv("POPPLER_PATH") or _read_dotenv_value("POPPLER_PATH")
+    return get_env_value("POPPLER_PATH")
 
 
 def iter_pdf_images(pdf_path: str, output_dir: str, dpi: int = 300):
