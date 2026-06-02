@@ -14,8 +14,8 @@ from typing import Annotated
 from fastapi import BackgroundTasks, FastAPI, Header, HTTPException
 from pydantic import BaseModel, Field
 
-from ocr_engine.config import get_settings
-from ocr_engine.tasks import run_ocr_job
+from .config import get_settings
+from .tasks import run_ocr_job
 
 logging.basicConfig(level=logging.INFO)
 logger = logging.getLogger(__name__)
