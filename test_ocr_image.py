@@ -12,8 +12,8 @@ import argparse
 from pathlib import Path
 from typing import Any
 
-from utils.files import require_file
-from utils.json_io import dumps_json, write_json
+from common.files import require_file
+from common.json_io import dumps_json, write_json
 
 
 def _write_or_print(data: dict[str, Any], output_path: str | None) -> None:
@@ -24,7 +24,7 @@ def _write_or_print(data: dict[str, Any], output_path: str | None) -> None:
 
 
 def run_easyocr(path: Path) -> dict[str, Any]:
-    from ocr_pipeline.ocr_extraction import extract_arabic_from_cell_image
+    from services.easyocr_pipeline.ocr_extraction import extract_arabic_from_cell_image
 
     text, details = extract_arabic_from_cell_image(str(path))
     return {
@@ -36,7 +36,8 @@ def run_easyocr(path: Path) -> dict[str, Any]:
 
 
 def run_gemini(path: Path, output_path: str | None, model: str | None) -> dict[str, Any]:
-    from ocr_gemini.extractor import DEFAULT_MODEL, extract_pdf_to_json
+    from services.gemini import extract_pdf_to_json
+    from services.gemini.prompts import DEFAULT_MODEL
 
     return extract_pdf_to_json(
         path,
@@ -51,8 +52,10 @@ def run_huggingface(
     model: str | None,
     dpi: int,
     max_new_tokens: int,
+    mode: str,
 ) -> dict[str, Any]:
-    from ocr_huggingFace.extractor import DEFAULT_MODEL, extract_pdf_to_json
+    from services.huggingface import extract_pdf_to_json
+    from services.huggingface.prompts import DEFAULT_MODEL
 
     return extract_pdf_to_json(
         path,
@@ -60,6 +63,7 @@ def run_huggingface(
         model_name=model or DEFAULT_MODEL,
         dpi=dpi,
         max_new_tokens=max_new_tokens,
+        mode=mode,
     )
 
 
@@ -77,8 +81,14 @@ def main() -> int:
     parser.add_argument(
         "--max-new-tokens",
         type=int,
-        default=2048,
+        default=4096,
         help="Generation budget per page for Hugging Face",
+    )
+    parser.add_argument(
+        "--mode",
+        choices=["document", "pages"],
+        default="document",
+        help="Hugging Face mode: document sends all pages together, pages sends one page at a time",
     )
     args = parser.parse_args()
 
@@ -102,6 +112,7 @@ def main() -> int:
             args.model,
             args.dpi,
             args.max_new_tokens,
+            args.mode,
         )
         if not args.output:
             _write_or_print(data, None)

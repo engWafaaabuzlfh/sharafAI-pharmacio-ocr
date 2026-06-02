@@ -1,7 +1,7 @@
 """
 FastAPI OCR engine — encapsulates integrated_pipeline for pharmacio-backend dispatch.
 
-Backend sends: POST JSON { job_id, file_reference }, Authorization: AI_ENGINE_API_KEY
+Backend sends: POST JSON { job_id, file_reference }, Authorization: OCR_ENGINE_API_KEY
 This service responds 202 immediately, then runs process_pdf_to_json and POSTs to
 /api/v1/ocr/result/ with Authorization: INTERNAL_SERVICE_TOKEN.
 """
@@ -36,7 +36,7 @@ def _check_dispatch_auth(authorization: str | None) -> None:
     settings = get_settings()
     expected = settings.ai_engine_api_key
     if not expected:
-        logger.error("AI_ENGINE_API_KEY is not configured")
+        logger.error("OCR_ENGINE_API_KEY is not configured")
         raise HTTPException(status_code=503, detail="OCR engine not configured")
     if (authorization or "") != expected:
         raise HTTPException(status_code=401, detail="Unauthorized")

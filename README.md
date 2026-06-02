@@ -39,7 +39,7 @@ The OCR engine shares its configuration concepts with the backend to ensure secu
 
 | Variable | Description |
 |---|---|
-| `AI_ENGINE_API_KEY` | The secret key required to authorize the inbound `/v1/process` requests. |
+| `OCR_ENGINE_API_KEY` | The secret key required to authorize the inbound `/v1/process` requests. If using an older setup, `AI_ENGINE_API_KEY` is still supported as a fallback. |
 | `INTERNAL_SERVICE_TOKEN` | The secret key used to compute the `Authorization` header when POSTing results back to the backend. |
 | `BACKEND_BASE_URL` | Base URL of the backend (e.g., `http://backend:8000`). |
 | `STORAGE_BACKEND` | Must match the backend. Accepts `s3` or `local`. |
@@ -61,7 +61,7 @@ Accepts a new OCR task.
 
 **Headers:**
 ```http
-Authorization: <AI_ENGINE_API_KEY>
+Authorization: <OCR_ENGINE_API_KEY>
 ```
 
 **Body:**
@@ -82,3 +82,13 @@ Authorization: <AI_ENGINE_API_KEY>
 
 ### `GET /health`
 Returns the status of the service `{ "status": "ok" }`.
+
+## 🚀 Run Locally
+
+To start the FastAPI service directly from the repository root:
+
+```bash
+python run.py
+```
+
+This uses `run.py` as the primary project entrypoint and starts the application on `OCR_ENGINE_HOST:OCR_ENGINE_PORT`.

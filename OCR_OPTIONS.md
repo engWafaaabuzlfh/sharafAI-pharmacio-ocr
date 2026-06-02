@@ -7,7 +7,7 @@ The project now has three OCR/document extraction options.
 Best when you want the current OpenCV cell-detection pipeline.
 
 ```powershell
-python -c "from ocr_pipeline.pipeline import process_pdf_to_json; print(process_pdf_to_json('media/invoices/test.pdf'))"
+python -c "from services.easyocr_pipeline.pipeline import process_pdf_to_json; print(process_pdf_to_json('media/invoices/test.pdf'))"
 ```
 
 Requires Poppler for PDF conversion when running locally.
@@ -18,7 +18,7 @@ Best for fast experimentation and direct PDF-to-JSON extraction.
 
 ```powershell
 pip install google-genai
-python -m ocr_gemini.extractor media/invoices/test.pdf -o gemini_result.json
+python -m services.gemini.cli media/invoices/test.pdf -o gemini_result.json
 ```
 
 Requires:
@@ -39,7 +39,7 @@ Best for a strong local vision-language model option without sending files to an
 
 ```powershell
 pip install transformers accelerate qwen-vl-utils pymupdf pillow torch torchvision
-python -m ocr_huggingFace.extractor media/invoices/test.pdf -o hf_qwen_result.json
+python -m services.huggingface.cli media/invoices/test.pdf -o hf_qwen_result.json
 ```
 
 Default model:
@@ -53,5 +53,5 @@ This uses PyMuPDF to render the PDF, so it does not require Poppler.
 You can also try the newer model:
 
 ```powershell
-python -m ocr_huggingFace.extractor media/invoices/test.pdf -o hf_qwen25_result.json --model Qwen/Qwen2.5-VL-7B-Instruct
+python -m services.huggingface.cli media/invoices/test.pdf -o hf_qwen25_result.json --model Qwen/Qwen2.5-VL-7B-Instruct
 ```

@@ -1,13 +1,13 @@
 """Backward-compatible exports for the modular OCR pipeline."""
 
-from ocr_pipeline.cell_detection import (
+from services.easyocr_pipeline.cell_detection import (
     detect_cells,
     preprocess_image,
     process_normalized_folder,
     save_cell_positions,
 )
-from ocr_pipeline.merge import read_and_merge_json_files_simple
-from ocr_pipeline.ocr_extraction import (
+from services.easyocr_pipeline.merge import read_and_merge_json_files_simple
+from services.easyocr_pipeline.ocr_extraction import (
     convert_to_serializable,
     extract_arabic_from_cell_image,
     fix_slash_order,
@@ -15,8 +15,8 @@ from ocr_pipeline.ocr_extraction import (
     process_cells_with_positions,
     read_cell_positions,
 )
-from ocr_pipeline.pipeline import process_pdf_to_json
-from ocr_pipeline.preprocessing import (
+from services.easyocr_pipeline.pipeline import process_pdf_to_json
+from services.easyocr_pipeline.preprocessing import (
     convert_pdf_to_images,
     load_image_rgb,
     normalize_colors,
@@ -24,7 +24,7 @@ from ocr_pipeline.preprocessing import (
     process_image_normalize_only,
     save_results,
 )
-from ocr_pipeline.settings import EXPERIMENTAL_CONFIGS, IMAGE_EXTENSIONS
+from services.easyocr_pipeline.settings import EXPERIMENTAL_CONFIGS, IMAGE_EXTENSIONS
 
 __all__ = [
     "IMAGE_EXTENSIONS",

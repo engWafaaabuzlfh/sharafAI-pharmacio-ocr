@@ -8,7 +8,7 @@ import os
 import cv2
 import numpy as np
 
-from ocr_pipeline.settings import EXPERIMENTAL_CONFIGS
+from services.easyocr_pipeline.settings import EXPERIMENTAL_CONFIGS
 
 
 def preprocess_image(img, config: dict):

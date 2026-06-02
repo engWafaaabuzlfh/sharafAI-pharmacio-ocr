@@ -9,7 +9,7 @@ import cv2
 import numpy as np
 import pandas as pd
 
-from ocr_pipeline.runtime import get_reader
+from services.easyocr_pipeline.runtime import get_reader
 
 
 def convert_to_serializable(obj):

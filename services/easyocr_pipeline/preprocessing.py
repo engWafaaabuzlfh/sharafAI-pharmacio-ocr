@@ -7,8 +7,8 @@ import os
 import cv2
 import numpy as np
 
-from ocr_pipeline.settings import IMAGE_EXTENSIONS
-from utils.env import get_env_value
+from services.easyocr_pipeline.settings import IMAGE_EXTENSIONS
+from common.env import get_env_value
 
 
 def _get_poppler_path() -> str | None:

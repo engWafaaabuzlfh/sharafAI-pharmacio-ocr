@@ -1,4 +1,4 @@
-﻿"""Page-by-page OCR pipeline orchestration."""
+"""Page-by-page OCR pipeline orchestration."""
 
 from __future__ import annotations
 
@@ -8,17 +8,17 @@ import os
 
 import cv2
 
-from ocr_pipeline.cell_detection import (
+from services.easyocr_pipeline.cell_detection import (
     _fallback_grid_detection,
     detect_cells,
     preprocess_image,
     save_cell_positions,
 )
-from ocr_pipeline.merge import read_and_merge_json_files_simple
-from ocr_pipeline.ocr_extraction import process_cells_with_positions
-from ocr_pipeline.preprocessing import process_image_normalize_only
-from ocr_pipeline.settings import EXPERIMENTAL_CONFIGS
-from utils.env import get_env_value
+from services.easyocr_pipeline.merge import read_and_merge_json_files_simple
+from services.easyocr_pipeline.ocr_extraction import process_cells_with_positions
+from services.easyocr_pipeline.preprocessing import process_image_normalize_only
+from services.easyocr_pipeline.settings import EXPERIMENTAL_CONFIGS
+from common.env import get_env_value
 
 
 def _get_poppler_path() -> str | None:

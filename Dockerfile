@@ -24,10 +24,10 @@ RUN mkdir -p /root/.EasyOCR/model \
     && python -c "import easyocr; easyocr.Reader(['ar', 'en'], gpu=False)"
 
 COPY integrated_pipeline.py .
-COPY ocr_pipeline ./ocr_pipeline
 COPY ocr_engine ./ocr_engine
+COPY run.py .
 
 ENV PYTHONPATH=/app
 EXPOSE 8080
 
-CMD ["uvicorn", "ocr_engine.main:app", "--host", "0.0.0.0", "--port", "8080"]
+CMD ["python", "run.py"]

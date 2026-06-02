@@ -1,3 +1,4 @@
+from common.env import get_env_value
 from pydantic import Field
 from pydantic_settings import BaseSettings, SettingsConfigDict
 
@@ -12,8 +13,8 @@ class Settings(BaseSettings):
         populate_by_name=True,
     )
 
-    # Inbound dispatch (must match backend AI_ENGINE_API_KEY — compared as full Authorization value)
-    ai_engine_api_key: str = Field(default="", alias="AI_ENGINE_API_KEY")
+    # Inbound dispatch (must match backend OCR_ENGINE_API_KEY or legacy AI_ENGINE_API_KEY).
+    ai_engine_api_key: str = Field(default="", alias="OCR_ENGINE_API_KEY")
 
     # Outbound callback (must match backend INTERNAL_SERVICE_TOKEN)
     internal_service_token: str = Field(default="", alias="INTERNAL_SERVICE_TOKEN")
@@ -36,4 +37,7 @@ class Settings(BaseSettings):
 
 
 def get_settings() -> Settings:
-    return Settings()
+    settings = Settings()
+    if not settings.ai_engine_api_key:
+        settings.ai_engine_api_key = get_env_value("OCR_ENGINE_API_KEY", "AI_ENGINE_API_KEY") or ""
+    return settings

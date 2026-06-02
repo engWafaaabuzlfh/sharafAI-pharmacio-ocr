@@ -34,18 +34,18 @@ def _normalize_engine_name(ocr_engine: str | None) -> str:
 def _run_selected_engine(local_pdf: str, work_dir: str, ocr_engine: str) -> dict[str, Any] | None:
     engine = _normalize_engine_name(ocr_engine)
     if engine == "easyocr":
-        from integrated_pipeline import process_pdf_to_json
+        from services.easyocr_pipeline.pipeline import process_pdf_to_json
 
         _, merged_data = process_pdf_to_json(local_pdf, output_base_dir=work_dir)
         return merged_data
 
     if engine == "gemini":
-        from ocr_gemini.extractor import extract_pdf_to_json
+        from services.gemini import extract_pdf_to_json
 
         return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "gemini_result.json"))
 
     if engine == "huggingface":
-        from ocr_huggingFace.extractor import extract_pdf_to_json
+        from services.huggingface import extract_pdf_to_json
 
         return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "huggingface_result.json"))
 
