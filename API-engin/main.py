@@ -23,12 +23,21 @@ logger = logging.getLogger(__name__)
 app = FastAPI(title="Pharmacio OCR Engine", version="1.0.0")
 
 
+class TargetItem(BaseModel):
+    product_name: str = Field(..., description="Product name to search for")
+    strength: str | None = Field(None, description="Product strength or dosage")
+
+
 class ProcessRequest(BaseModel):
     job_id: str = Field(..., description="OCR job UUID string from backend")
     file_reference: str = Field(..., description="Storage key (S3 key or local media path)")
+    target_items: list[TargetItem] = Field(
+        default_factory=list,
+        description="List of target items to search for in the OCR result",
+    )
     ocr_engine: str = Field(
-        default="easyocr",
-        description="OCR engine to use: easyocr, gemini, huggingface",
+        default="easy",
+        description="OCR engine to use: easy, easyocr, gemini, huggingface",
     )
 
 
@@ -60,12 +69,14 @@ def _enqueue_process(
         body.file_reference,
         settings,
         body.ocr_engine,
+        body.target_items,
     )
     logger.info(
-        "Accepted job_id=%s file_reference=%s ocr_engine=%s",
+        "Accepted job_id=%s file_reference=%s ocr_engine=%s target_items=%s",
         body.job_id,
         body.file_reference,
         body.ocr_engine,
+        [item.product_name for item in body.target_items],
     )
     return {"status": "accepted", "ocr_engine": body.ocr_engine}
 

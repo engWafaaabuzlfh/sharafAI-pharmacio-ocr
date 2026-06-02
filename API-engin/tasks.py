@@ -18,11 +18,36 @@ from services.ocr_engines import extract_pdf_to_json, normalize_engine_name
 logger = logging.getLogger(__name__)
 
 
+def _item_value(item: object, key: str) -> str:
+    if isinstance(item, dict):
+        return item.get(key, "")
+    return getattr(item, key, "")
+
+
+def _prepare_callback_items(target_items: list[object] | None) -> list[dict[str, object]]:
+    if not target_items:
+        return []
+
+    results = []
+    for item in target_items:
+        results.append(
+            {
+                "drug_name": _item_value(item, "product_name"),
+                "company": "",
+                "price": 0.0,
+                "confidence": 0.0,
+                "review_required": False,
+            }
+        )
+    return results
+
+
 def run_ocr_job(
     job_id: str,
     file_reference: str,
     settings: Settings | None = None,
     ocr_engine: str = "easyocr",
+    target_items: list[dict[str, str]] | None = None,
 ) -> None:
     """
     Download PDF by storage key, run integrated_pipeline.process_pdf_to_json unchanged,
@@ -64,8 +89,9 @@ def run_ocr_job(
     headers = {"Authorization": settings.internal_service_token}
     body = {
         "job_id": job_id,
-        "ocr_engine": normalized_engine,
-        "payload": merged_data,
+        "payload": {
+            "items": _prepare_callback_items(target_items),
+        },
     }
     try:
         r = requests.post(
