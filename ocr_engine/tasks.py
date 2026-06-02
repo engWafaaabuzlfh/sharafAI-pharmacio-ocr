@@ -13,43 +13,9 @@ import requests
 
 from ocr_engine.config import Settings, get_settings
 from ocr_engine.storage import FileFetchError, fetch_file_to_path
+from services.ocr_engines import extract_pdf_to_json, normalize_engine_name
 
 logger = logging.getLogger(__name__)
-
-
-def _normalize_engine_name(ocr_engine: str | None) -> str:
-    value = (ocr_engine or "easyocr").strip().lower().replace("-", "_")
-    aliases = {
-        "easy": "easyocr",
-        "easy_ocr": "easyocr",
-        "hf": "huggingface",
-        "hugging_face": "huggingface",
-        "qwen": "huggingface",
-        "qwen2_vl": "huggingface",
-        "google": "gemini",
-    }
-    return aliases.get(value, value)
-
-
-def _run_selected_engine(local_pdf: str, work_dir: str, ocr_engine: str) -> dict[str, Any] | None:
-    engine = _normalize_engine_name(ocr_engine)
-    if engine == "easyocr":
-        from services.easyocr_pipeline.pipeline import process_pdf_to_json
-
-        _, merged_data = process_pdf_to_json(local_pdf, output_base_dir=work_dir)
-        return merged_data
-
-    if engine == "gemini":
-        from services.gemini import extract_pdf_to_json
-
-        return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "gemini_result.json"))
-
-    if engine == "huggingface":
-        from services.huggingface import extract_pdf_to_json
-
-        return extract_pdf_to_json(local_pdf, output_path=os.path.join(work_dir, "huggingface_result.json"))
-
-    raise ValueError(f"Unsupported OCR engine: {ocr_engine}")
 
 
 def run_ocr_job(
@@ -65,36 +31,40 @@ def run_ocr_job(
     settings = settings or get_settings()
     callback_url = f"{settings.backend_base_url.rstrip('/')}/api/v1/ocr/result/"
 
-    tmp_root = tempfile.mkdtemp(prefix="ocr_engine_")
-    pdf_name = f"{uuid.uuid4().hex}.pdf"
-    local_pdf = os.path.join(tmp_root, pdf_name)
-    work_dir = os.path.join(tmp_root, "work")
+    with tempfile.TemporaryDirectory(prefix="ocr_engine_") as tmp_root:
+        pdf_name = f"{uuid.uuid4().hex}.pdf"
+        local_pdf = os.path.join(tmp_root, pdf_name)
+        work_dir = os.path.join(tmp_root, "work")
 
-    try:
-        fetch_file_to_path(file_reference=file_reference, dest_path=local_pdf, settings=settings)
-    except FileFetchError as e:
-        logger.error("Job %s: could not fetch file_reference=%s: %s", job_id, file_reference, e)
-        return
-    except Exception:
-        logger.exception("Job %s: unexpected fetch error for %s", job_id, file_reference)
-        return
+        try:
+            fetch_file_to_path(file_reference=file_reference, dest_path=local_pdf, settings=settings)
+        except FileFetchError as e:
+            logger.error("Job %s: could not fetch file_reference=%s: %s", job_id, file_reference, e)
+            return
+        except Exception:
+            logger.exception("Job %s: unexpected fetch error for %s", job_id, file_reference)
+            return
 
-    merged_data: dict[str, Any] | None = None
-    try:
-        # Lazy import inside dispatcher so optional engines load only when selected.
-        merged_data = _run_selected_engine(local_pdf, work_dir, ocr_engine)
-    except Exception:
-        logger.exception("Job %s: OCR engine %s failed", job_id, ocr_engine)
-        return
+        merged_data: dict[str, Any] | None = None
+        normalized_engine = normalize_engine_name(ocr_engine)
+        try:
+            merged_data = extract_pdf_to_json(
+                normalized_engine,
+                local_pdf,
+                output_path=work_dir if normalized_engine == "easyocr" else os.path.join(work_dir, f"{normalized_engine}_result.json"),
+            )
+        except Exception:
+            logger.exception("Job %s: OCR engine %s failed", job_id, ocr_engine)
+            return
 
-    if not merged_data:
-        logger.error("Job %s: pipeline returned no merged_data", job_id)
-        return
+        if not merged_data:
+            logger.error("Job %s: pipeline returned no merged_data", job_id)
+            return
 
     headers = {"Authorization": settings.internal_service_token}
     body = {
         "job_id": job_id,
-        "ocr_engine": _normalize_engine_name(ocr_engine),
+        "ocr_engine": normalized_engine,
         "payload": merged_data,
     }
     try:

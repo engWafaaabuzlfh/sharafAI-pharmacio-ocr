@@ -69,6 +69,39 @@ def save_cell_positions(cells: list[tuple[int, int, int, int]], exp_dir: str):
     return csv_path
 
 
+def process_normalized_image_data(img, exp_dir: str, config: dict):
+    cells_dir = os.path.join(exp_dir, "cells")
+    debug_dir = os.path.join(exp_dir, "debug")
+    os.makedirs(cells_dir, exist_ok=True)
+    os.makedirs(debug_dir, exist_ok=True)
+
+    binary, gray, enhanced = preprocess_image(img, config)
+    cv2.imwrite(os.path.join(debug_dir, "enhanced.jpg"), enhanced)
+    cv2.imwrite(os.path.join(debug_dir, "binary.jpg"), binary)
+
+    cells = detect_cells(binary, gray.shape, config)
+    if len(cells) < 5:
+        cells = _fallback_grid_detection(binary, gray.shape, config)
+
+    debug_img = img.copy()
+    for x, y, w, h in cells:
+        cv2.rectangle(debug_img, (x, y), (x + w, y + h), (0, 255, 0), 1)
+    cv2.imwrite(os.path.join(debug_dir, "detected_cells.jpg"), debug_img)
+
+    cells = sorted(cells, key=lambda b: (b[1], b[0]))
+    for i, (x, y, w, h) in enumerate(cells):
+        margin = config["cell_margin"]
+        x1 = max(0, x - margin)
+        y1 = max(0, y - margin)
+        x2 = min(gray.shape[1], x + w + margin)
+        y2 = min(gray.shape[0], y + h + margin)
+        cell_img = enhanced[y1:y2, x1:x2]
+        cv2.imwrite(os.path.join(cells_dir, f"cell_{i:04d}.jpg"), cell_img)
+
+    save_cell_positions(cells, exp_dir)
+    return cells
+
+
 def _fallback_grid_detection(binary, gray_shape: tuple[int, int], config: dict):
     h_projection = np.sum(binary, axis=1) / 255
     v_projection = np.sum(binary, axis=0) / 255
@@ -124,33 +157,9 @@ def process_normalized_folder(input_dir: str, output_dir: str):
             config = EXPERIMENTAL_CONFIGS[0]
             relative_path = os.path.relpath(root, input_dir)
             exp_dir = os.path.join(output_dir, relative_path)
-            cells_dir = os.path.join(exp_dir, "cells")
-            debug_dir = os.path.join(exp_dir, "debug")
-            os.makedirs(cells_dir, exist_ok=True)
-            os.makedirs(debug_dir, exist_ok=True)
+            cells = process_normalized_image_data(img, exp_dir, config)
+            if not cells:
+                print(f"No cells detected in: {img_path}")
+                continue
 
-            binary, gray, enhanced = preprocess_image(img, config)
-            cv2.imwrite(os.path.join(debug_dir, "enhanced.jpg"), enhanced)
-            cv2.imwrite(os.path.join(debug_dir, "binary.jpg"), binary)
-
-            cells = detect_cells(binary, gray.shape, config)
-            if len(cells) < 5:
-                cells = _fallback_grid_detection(binary, gray.shape, config)
-
-            debug_img = img.copy()
-            for x, y, w, h in cells:
-                cv2.rectangle(debug_img, (x, y), (x + w, y + h), (0, 255, 0), 1)
-            cv2.imwrite(os.path.join(debug_dir, "detected_cells.jpg"), debug_img)
-
-            cells = sorted(cells, key=lambda b: (b[1], b[0]))
-            for i, (x, y, w, h) in enumerate(cells):
-                margin = config["cell_margin"]
-                x1 = max(0, x - margin)
-                y1 = max(0, y - margin)
-                x2 = min(gray.shape[1], x + w + margin)
-                y2 = min(gray.shape[0], y + h + margin)
-                cell_img = enhanced[y1:y2, x1:x2]
-                cv2.imwrite(os.path.join(cells_dir, f"cell_{i:04d}.jpg"), cell_img)
-
-            save_cell_positions(cells, exp_dir)
             print(f"Processed and saved: {img_path}")

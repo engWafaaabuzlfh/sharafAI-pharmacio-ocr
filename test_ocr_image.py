@@ -14,6 +14,7 @@ from typing import Any
 
 from common.files import require_file
 from common.json_io import dumps_json, write_json
+from services.ocr_engines import normalize_engine_name
 
 
 def _write_or_print(data: dict[str, Any], output_path: str | None) -> None:
@@ -98,10 +99,11 @@ def main() -> int:
         print(e)
         return 1
 
-    if args.engine == "easyocr":
+    normalized_engine = normalize_engine_name(args.engine)
+    if normalized_engine == "easyocr":
         data = run_easyocr(input_path)
         _write_or_print(data, args.output)
-    elif args.engine == "gemini":
+    elif normalized_engine == "gemini":
         data = run_gemini(input_path, args.output, args.model)
         if not args.output:
             _write_or_print(data, None)
