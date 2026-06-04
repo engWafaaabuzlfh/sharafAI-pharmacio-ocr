@@ -6,7 +6,7 @@ services:
     ports:
       - "8080:8080"
     env_file:
-      - ../pharmacio-backend/.env
+      - .env
     environment:
       BACKEND_BASE_URL: http://backend:8000
       STORAGE_BACKEND: s3
