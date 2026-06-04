@@ -16,12 +16,24 @@ def extract_json_object(text: str) -> dict[str, Any]:
 
     try:
         return json.loads(cleaned)
-    except json.JSONDecodeError:
+    except json.JSONDecodeError as first_error:
         start = cleaned.find("{")
         end = cleaned.rfind("}")
         if start != -1 and end != -1 and end > start:
-            return json.loads(cleaned[start : end + 1])
-        return {"raw_response": text, "warnings": ["Response was not valid JSON"]}
+            candidate = cleaned[start : end + 1]
+            try:
+                return json.loads(candidate)
+            except json.JSONDecodeError as second_error:
+                return {
+                    "raw_response": text,
+                    "warnings": [
+                        "Response was not valid JSON",
+                        f"first_error={first_error.msg} at pos {first_error.pos}",
+                        f"second_error={second_error.msg} at pos {second_error.pos}",
+                    ],
+                }
+
+        return {"raw_response": text, "warnings": [f"Response was not valid JSON: {first_error.msg}"]}
 
 
 def write_json(data: dict[str, Any], output_path: str | Path) -> Path:

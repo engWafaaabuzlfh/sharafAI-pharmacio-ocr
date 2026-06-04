@@ -13,7 +13,8 @@ from services.huggingface.prompts import DEFAULT_MODEL, DEFAULT_PROMPT, PAGE_PRO
 from common.files import require_file
 from common.json_io import write_json
 
-
+print("Hugging Face Qwen-VL OCR engine loaded with model:", DEFAULT_MODEL)
+print("Default prompt:", DEFAULT_PROMPT)
 def extract_images_to_json(
     images: list[Image.Image],
     *,

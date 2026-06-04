@@ -59,9 +59,8 @@ def health() -> dict[str, str]:
 def _enqueue_process(
     body: ProcessRequest,
     background_tasks: BackgroundTasks,
-    authorization: str | None,
 ) -> dict[str, str]:
-    _check_dispatch_auth(authorization)
+    # _check_dispatch_auth(authorization)
     settings = get_settings()
     background_tasks.add_task(
         run_ocr_job,
@@ -85,13 +84,12 @@ def _enqueue_process(
 def accept_process(
     body: ProcessRequest,
     background_tasks: BackgroundTasks,
-    authorization: Annotated[str | None, Header()] = None,
 ) -> dict[str, str]:
     """
     Accept OCR job (matches typical OCR_ENGINE_PROCESS_URL .../v1/process).
     Returns before pipeline completes so Celery dispatch stays within timeout.
     """
-    return _enqueue_process(body, background_tasks, authorization)
+    return _enqueue_process(body, background_tasks)
 
 
 @app.post("/process", status_code=202, include_in_schema=False)

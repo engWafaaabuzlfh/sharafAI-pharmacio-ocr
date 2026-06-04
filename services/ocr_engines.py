@@ -42,18 +42,23 @@ def extract_pdf_to_json(
     if engine == "gemini":
         from services.gemini import extract_pdf_to_json as gemini_extract
 
-        return gemini_extract(pdf_path, output_path=output_path, model=kwargs.get("model"))
+        gemini_kwargs: dict[str, object] = {}
+        if "model" in kwargs and kwargs["model"] is not None:
+            gemini_kwargs["model"] = kwargs["model"]
+
+        return gemini_extract(pdf_path, output_path=output_path, **gemini_kwargs)
 
     if engine == "huggingface":
         from services.huggingface import extract_pdf_to_json as hf_extract
 
-        return hf_extract(
-            pdf_path,
-            output_path=output_path,
-            model_name=kwargs.get("model_name"),
-            dpi=kwargs.get("dpi", 180),
-            max_new_tokens=kwargs.get("max_new_tokens", 2048),
-            mode=kwargs.get("mode", "document"),
-        )
+        hf_kwargs = {
+            "dpi": kwargs.get("dpi", 180),
+            "max_new_tokens": kwargs.get("max_new_tokens", 2048),
+            "mode": kwargs.get("mode", "document"),
+        }
+        if "model_name" in kwargs:
+            hf_kwargs["model_name"] = kwargs["model_name"]
+        
+        return hf_extract(pdf_path, output_path=output_path, **hf_kwargs)
 
     raise ValueError(f"Unsupported OCR engine: {engine}")
