@@ -11,8 +11,8 @@ from typing import Any
 
 import requests
 
-from ocr_engine.config import Settings, get_settings
-from ocr_engine.storage import FileFetchError, fetch_file_to_path
+from API_Engine.config import Settings, get_settings
+from API_Engine.storage import FileFetchError, fetch_file_to_path
 from services.ocr_engines import extract_pdf_to_json, normalize_engine_name
 
 logger = logging.getLogger(__name__)

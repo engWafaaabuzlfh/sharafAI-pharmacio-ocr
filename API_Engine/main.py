@@ -51,7 +51,7 @@ def _check_dispatch_auth(authorization: str | None) -> None:
         raise HTTPException(status_code=401, detail="Unauthorized")
 
 
-@app.get("/health")
+@app.get("/")
 def health() -> dict[str, str]:
     return {"status": "ok"}
 

@@ -10,7 +10,7 @@ import boto3
 from botocore.config import Config
 from botocore.exceptions import BotoCoreError, ClientError
 
-from ocr_engine.config import Settings
+from API_Engine.config import Settings
 
 logger = logging.getLogger(__name__)
 
